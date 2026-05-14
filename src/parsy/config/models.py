@@ -64,6 +64,7 @@ class SchemaConfig:
 @dataclass(slots=True)
 class ExportConfig:
     formats: list[str] = field(default_factory=lambda: ["json"])
+    overwrite: bool = False
 
 
 @dataclass(slots=True)
@@ -117,6 +118,7 @@ class ParsyConfig:
         *,
         language: str | None = None,
         formats: tuple[str, ...] | list[str] | None = None,
+        overwrite: bool | None = None,
         overview: bool | None = None,
         overview_endpoint: str | None = None,
         overview_png: bool | None = None,
@@ -128,6 +130,8 @@ class ParsyConfig:
             self.language = language
         if formats:
             self.exports.formats = list(formats)
+        if overwrite is not None:
+            self.exports.overwrite = overwrite
         if overview is not None:
             self.overview.enabled = overview
         if overview_endpoint:
