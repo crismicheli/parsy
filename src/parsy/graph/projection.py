@@ -37,6 +37,8 @@ def project_graph(graph: PropertyGraph, view: str) -> PropertyGraph:
         return _copy_graph(graph)
     if view not in VIEW_RULES:
         raise ValueError(f"Unknown graph view: {view}")
+    if view == "module":
+        return _project_module_graph(graph)
 
     rules = VIEW_RULES[view]
     allowed_nodes = rules["nodes"]
@@ -63,6 +65,64 @@ def project_graph(graph: PropertyGraph, view: str) -> PropertyGraph:
     if connected_only:
         _drop_isolated_nodes(projected)
     return projected
+
+
+def _project_module_graph(graph: PropertyGraph) -> PropertyGraph:
+    projected = PropertyGraph()
+    module_ids = {node.id for node in graph.nodes.values() if node.kind == "Module"}
+    external_ids = {node.id for node in graph.nodes.values() if node.kind == "ExternalSymbol"}
+
+    for node in graph.nodes.values():
+        if node.kind in {"Module", "ExternalSymbol"}:
+            projected.add_node(_copy_node(node))
+
+    collapsed_edges: dict[tuple[str, str, str], Edge] = {}
+    for edge in graph.edges:
+        if edge.kind != "IMPORTS":
+            continue
+        source = _nearest_module_or_external(edge.source, module_ids, external_ids)
+        target = _nearest_module_or_external(edge.target, module_ids, external_ids)
+        if source is None or target is None or source == target:
+            continue
+        key = (source, target, "IMPORTS")
+        if key not in collapsed_edges:
+            collapsed_edges[key] = Edge(
+                source=source,
+                target=target,
+                kind="IMPORTS",
+                properties={
+                    "projection": "module",
+                    "collapsed_from": [],
+                },
+            )
+        collapsed_edges[key].properties.setdefault("collapsed_from", []).append(
+            {
+                "source": edge.source,
+                "target": edge.target,
+                "kind": edge.kind,
+                **edge.properties,
+            }
+        )
+
+    projected.edges = list(collapsed_edges.values())
+    _drop_isolated_nodes(projected)
+    return projected
+
+
+def _nearest_module_or_external(
+    symbol_id: str,
+    module_ids: set[str],
+    external_ids: set[str],
+) -> str | None:
+    if symbol_id in module_ids or symbol_id in external_ids:
+        return symbol_id
+    parts = symbol_id.split(".")
+    while parts:
+        candidate = ".".join(parts)
+        if candidate in module_ids:
+            return candidate
+        parts.pop()
+    return None
 
 
 def _edge_allowed_for_view(edge: Edge, view: str, graph: PropertyGraph) -> bool:
