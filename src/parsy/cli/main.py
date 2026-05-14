@@ -207,3 +207,4 @@ def _print_batch_result(batch: BatchAnalysisResult) -> None:
 
 if __name__ == "__main__":
     main()
+
