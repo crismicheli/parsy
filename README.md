@@ -112,70 +112,47 @@ parsy analyze https://github.com/org/repo \
   --overview-png
 ```
 
-## Granularity
+## Granularity versus projection
 
-`parsy` supports three graph detail levels:
+`parsy` separates **internal analysis depth** from **external exported schema**.
 
-```text
-low
-medium
-high
-```
-
-The default is:
+### Granularity
+Granularity controls how much information is extracted into the canonical internal graph. 
 
 ```text
-medium
+granularity = internal analysis depth
 ```
 
-### Low granularity
+Available values:
 
-Low granularity keeps the graph compact.
+- `low`: modules, classes, functions, imports, inheritance; compact and default.
+- `medium`: low plus internal call dependencies.
+- `high`: medium plus decorators, annotations, and unresolved external calls; largest and noisiest.
 
-```bash
-parsy analyze https://github.com/org/repo \
-  --granularity low \
-  --format json \
-  --verbose
+### Projection view
+
+Projection controls what external schema is exported from the internal graph.
+
+```text
+view = external exported graph schema
 ```
 
-Typical contents:
+Available values:
 
-- Repository
-- Modules
-- Classes
-- Functions
-- Methods
-- Containment edges
-- Import edges
-- Inheritance edges
+- `dependency`: dependency-only projection; default. Keeps `IMPORTS`, `INHERITS`, and `CALLS` edges, and removes containment clutter.
+- `module`: module/package import graph.
+- `class`: module/class view with class containment and inheritance/import dependencies.
+- `function`: function/method call graph.
+- `full`: full canonical internal property graph.
 
-It omits most call edges and external symbols.
-
-### Medium granularity
-
-Medium granularity is the default. It includes useful internal call information while avoiding many noisy unresolved external calls and annotation edges.
+Use both axes together:
 
 ```bash
 parsy analyze https://github.com/org/repo \
   --granularity medium \
-  --format json \
-  --format plantuml \
-  --verbose
+  --view function \
+  --format json
 ```
-
-### High granularity
-
-High granularity is the most detailed mode.
-
-```bash
-parsy analyze https://github.com/org/repo \
-  --granularity high \
-  --format json \
-  --verbose
-```
-
-It includes decorators, annotations, and unresolved external call symbols. This can create very large graphs.
 
 ## Verbose mode
 
