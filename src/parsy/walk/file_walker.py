@@ -7,6 +7,24 @@ from parsy.config.models import WalkConfig
 from parsy.walk.records import FileRecord
 
 
+EXCLUDED_PARTS = {
+    ".git",
+    ".hg",
+    ".svn",
+    ".venv",
+    "venv",
+    "env",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".tox",
+    "build",
+    "dist",
+    "node_modules",
+}
+
+
 def detect_language(path: Path) -> str | None:
     suffix = path.suffix.lower()
     if suffix == ".py":
@@ -25,6 +43,8 @@ def walk_repository(repo_root: Path, config: WalkConfig, language: str) -> list[
             continue
         rel = path.relative_to(repo_root)
         rel_posix = rel.as_posix()
+        if _excluded_by_part(rel):
+            continue
         if not _included(rel_posix, config.include):
             continue
         if _excluded(rel_posix, config.exclude):
@@ -50,3 +70,6 @@ def _included(path: str, patterns: list[str]) -> bool:
 def _excluded(path: str, patterns: list[str]) -> bool:
     return any(fnmatch(path, pattern) for pattern in patterns)
 
+
+def _excluded_by_part(path: Path) -> bool:
+    return any(part in EXCLUDED_PARTS for part in path.parts)
