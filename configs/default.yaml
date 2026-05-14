@@ -3,6 +3,7 @@ work_dir: .parsy-work
 schema:
   name: python-default
   granularity: low
+  view: dependency
 walk:
   include:
     - "**/*.py"
