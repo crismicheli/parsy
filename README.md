@@ -154,30 +154,6 @@ parsy analyze https://github.com/org/repo \
   --format json
 ```
 
-## Verbose mode
-
-Use `--verbose` or `-v` to print high-level pipeline progress:
-
-```bash
-parsy analyze https://github.com/org/repo \
-  --granularity medium \
-  --format json \
-  --verbose
-```
-
-Example progress messages:
-
-```text
-[parsy] Preparing repository: https://github.com/org/repo
-[parsy] Walking python files under: .parsy-work/github-com-org-repo
-[parsy] Selected 123 files for analysis
-[parsy] Parsing source files
-[parsy] Building symbol table
-[parsy] Building graph with granularity=medium
-[parsy] Exporting graph formats: json
-[parsy] Analysis complete
-```
-
 ## Batch analysis
 
 Analyze several repositories from CLI arguments:
