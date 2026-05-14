@@ -26,6 +26,7 @@ class WalkConfig:
 class SchemaConfig:
     name: str = "python-default"
     granularity: str = "low"
+    view: str = "dependency"
     include_external_symbols: bool = True
     include_calls: bool = True
     include_decorators: bool = False
@@ -53,6 +54,11 @@ class SchemaConfig:
             self.include_unresolved_external_calls = True
         else:
             raise ValueError(f"Unknown granularity: {self.granularity}")
+
+    def validate_view(self) -> None:
+        valid_views = {"full", "dependency", "module", "class", "function"}
+        if self.view not in valid_views:
+            raise ValueError(f"Unknown view: {self.view}")
 
 
 @dataclass(slots=True)
@@ -92,6 +98,7 @@ class ParsyConfig:
         walk = WalkConfig(**raw.get("walk", {}))
         schema = SchemaConfig(**raw.get("schema", {}))
         schema.apply_granularity()
+        schema.validate_view()
         exports = ExportConfig(**raw.get("exports", {}))
         overview = OverviewConfig(**raw.get("overview", {}))
         work_dir = Path(raw.get("work_dir", ".parsy-work"))
@@ -114,6 +121,7 @@ class ParsyConfig:
         overview_endpoint: str | None = None,
         overview_png: bool | None = None,
         granularity: str | None = None,
+        view: str | None = None,
         verbose: bool | None = None,
     ) -> "ParsyConfig":
         if language:
@@ -128,7 +136,10 @@ class ParsyConfig:
             self.overview.render_png = overview_png
         if granularity:
             self.schema.granularity = granularity
+        if view:
+            self.schema.view = view
         if verbose is not None:
             self.verbose = verbose
         self.schema.apply_granularity()
+        self.schema.validate_view()
         return self
