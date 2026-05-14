@@ -29,3 +29,4 @@ def export_graph(graph: PropertyGraph, formats: list[str], out_dir: Path) -> lis
 
     artifacts.append(export_symbol_inventory(graph, out_dir / "symbol_inventory.json"))
     return artifacts
+
