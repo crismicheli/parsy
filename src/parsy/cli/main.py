@@ -33,7 +33,7 @@ def main() -> None:
 )
 @click.option("--verbose", "-v", is_flag=True, help="Print high-level pipeline progress.")
 @click.option("--overview/--no-overview", default=None, help="Generate high-level Mermaid overview.")
-@click.option("--overview-endpoint", default=None, help="GitDiagram-compatible API endpoint.")
+@click.option("--overview-endpoint", default=None, help="Reserved stub for a future manual GitDiagram-compatible endpoint.")
 @click.option("--overview-png/--no-overview-png", default=None, help="Render Mermaid overview to PNG.")
 def analyze_cmd(
     source: str,
@@ -88,7 +88,7 @@ def analyze_cmd(
 )
 @click.option("--verbose", "-v", is_flag=True, help="Print high-level pipeline progress.")
 @click.option("--overview/--no-overview", default=None, help="Generate high-level Mermaid overview.")
-@click.option("--overview-endpoint", default=None, help="GitDiagram-compatible API endpoint.")
+@click.option("--overview-endpoint", default=None, help="Reserved stub for a future manual GitDiagram-compatible endpoint.")
 @click.option("--overview-png/--no-overview-png", default=None, help="Render Mermaid overview to PNG.")
 def analyze_many_cmd(
     sources: tuple[str, ...],
@@ -136,7 +136,7 @@ def analyze_many_cmd(
 )
 @click.option("--verbose", "-v", is_flag=True, help="Print high-level pipeline progress.")
 @click.option("--overview/--no-overview", default=None, help="Generate high-level Mermaid overview.")
-@click.option("--overview-endpoint", default=None, help="GitDiagram-compatible API endpoint.")
+@click.option("--overview-endpoint", default=None, help="Reserved stub for a future manual GitDiagram-compatible endpoint.")
 @click.option("--overview-png/--no-overview-png", default=None, help="Render Mermaid overview to PNG.")
 def analyze_list_cmd(
     sources_file: Path,
@@ -207,4 +207,3 @@ def _print_batch_result(batch: BatchAnalysisResult) -> None:
 
 if __name__ == "__main__":
     main()
-
