@@ -10,8 +10,7 @@ from parsy.ingest import prepare_repository
 from parsy.overview import save_overview
 from parsy.parse import parser_for_language
 from parsy.symbols import build_symbol_table
-from parsy.utils.paths import ensure_dir
-from parsy.utils.paths import slugify
+from parsy.utils.paths import ensure_dir, slugify
 from parsy.walk import walk_repository
 
 
@@ -50,15 +49,34 @@ class BatchAnalysisResult:
 
 def analyze(source: str, *, out_dir: Path, config: ParsyConfig | None = None) -> AnalysisResult:
     cfg = config or ParsyConfig()
+    cfg.schema.apply_granularity()
     out_dir = ensure_dir(out_dir)
+
+    _log(cfg, f"Preparing repository: {source}")
     repo_path = prepare_repository(source, cfg.work_dir)
+
+    _log(cfg, f"Walking {cfg.language} files under: {repo_path}")
     files = walk_repository(repo_path, cfg.walk, cfg.language)
+    _log(cfg, f"Selected {len(files)} files for analysis")
+
+    _log(cfg, "Initializing parser")
     parser = parser_for_language(cfg.language)
+
+    _log(cfg, "Parsing source files")
     parsed_files = [parser.parse_file(repo_path, record) for record in files]
+
+    _log(cfg, "Building symbol table")
     symbols = build_symbol_table(parsed_files)
+
+    _log(cfg, f"Building graph with granularity={cfg.schema.granularity}")
     graph = build_graph(repo_path, parsed_files, symbols, cfg.schema)
+    _log(cfg, f"Graph built: {len(graph.nodes)} nodes, {len(graph.edges)} edges")
+
+    _log(cfg, f"Exporting graph formats: {', '.join(cfg.exports.formats or ['json'])}")
     artifacts = export_graph(graph, cfg.exports.formats, out_dir)
+
     if cfg.overview.enabled:
+        _log(cfg, "Generating optional high-level Mermaid overview")
         artifacts.extend(
             save_overview(
                 source=source,
@@ -68,6 +86,8 @@ def analyze(source: str, *, out_dir: Path, config: ParsyConfig | None = None) ->
                 render_png=cfg.overview.render_png,
             )
         )
+
+    _log(cfg, "Analysis complete")
     return AnalysisResult(
         repo_path=repo_path,
         files_analyzed=len(files),
@@ -116,3 +136,8 @@ def _unique_slug(source: str, used: set[str]) -> str:
         counter += 1
     used.add(candidate)
     return candidate
+
+
+def _log(config: ParsyConfig, message: str) -> None:
+    if config.verbose:
+        print(f"[parsy] {message}")
