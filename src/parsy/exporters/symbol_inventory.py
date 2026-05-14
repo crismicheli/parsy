@@ -32,7 +32,6 @@ def build_symbol_inventory(graph: PropertyGraph) -> dict[str, Any]:
 
     for node in graph.nodes.values():
         group = "external" if node.kind == "ExternalSymbol" else "internal"
-
         node_counts[group][node.kind] += 1
         node_counts["all"][node.kind] += 1
 
@@ -70,4 +69,3 @@ def build_symbol_inventory(graph: PropertyGraph) -> dict[str, Any]:
             for group, values in node_examples.items()
         },
     }
-
