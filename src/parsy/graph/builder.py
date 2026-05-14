@@ -45,6 +45,8 @@ def _add_import_edges(
         target, status = symbols.resolve_name(parsed.module_name, parsed.module_name, alias.target)
         if target is None:
             target = alias.target
+        if status in {"external", "unresolved", "ambiguous"} and not schema.include_external_symbols:
+            continue
         if schema.include_external_symbols:
             graph.ensure_external(target)
         if target in graph.nodes:
@@ -101,6 +103,8 @@ def _add_class_edges(
             target, status = symbols.resolve_name(parsed.module_name, cls.scope, base)
             if target is None:
                 target = base
+            if status in {"external", "unresolved", "ambiguous"} and not schema.include_external_symbols:
+                continue
             if schema.include_external_symbols:
                 graph.ensure_external(target)
             if target in graph.nodes:
@@ -119,7 +123,17 @@ def _add_class_edges(
                 )
         if schema.include_decorators:
             for dec in cls.decorators:
-                _add_reference_edge(graph, symbols, parsed.module_name, cls.qualified_name, cls.scope, dec, "DECORATES", cls.line_start)
+                _add_reference_edge(
+                    graph,
+                    symbols,
+                    parsed.module_name,
+                    cls.qualified_name,
+                    cls.scope,
+                    dec,
+                    "DECORATES",
+                    cls.line_start,
+                    schema,
+                )
 
 
 def _add_function_edges(
@@ -129,12 +143,28 @@ def _add_function_edges(
         if schema.include_calls:
             for call in fn.calls:
                 _add_reference_edge(
-                    graph, symbols, parsed.module_name, fn.qualified_name, fn.scope, call, "CALLS", fn.line_start
+                    graph,
+                    symbols,
+                    parsed.module_name,
+                    fn.qualified_name,
+                    fn.scope,
+                    call,
+                    "CALLS",
+                    fn.line_start,
+                    schema,
                 )
         if schema.include_decorators:
             for dec in fn.decorators:
                 _add_reference_edge(
-                    graph, symbols, parsed.module_name, fn.qualified_name, fn.scope, dec, "DECORATES", fn.line_start
+                    graph,
+                    symbols,
+                    parsed.module_name,
+                    fn.qualified_name,
+                    fn.scope,
+                    dec,
+                    "DECORATES",
+                    fn.line_start,
+                    schema,
                 )
         if schema.include_annotations:
             for ann in fn.annotations:
@@ -147,6 +177,7 @@ def _add_function_edges(
                     ann,
                     "ANNOTATES_WITH",
                     fn.line_start,
+                    schema,
                 )
 
 
@@ -159,11 +190,24 @@ def _add_reference_edge(
     raw_target: str,
     kind: str,
     line: int,
+    schema: SchemaConfig,
 ) -> None:
     target, status = symbols.resolve_name(module_name, scope, raw_target)
     if target is None:
         target = raw_target
-    graph.ensure_external(target)
+
+    if status in {"external", "unresolved", "ambiguous"}:
+        if kind == "CALLS" and not schema.include_unresolved_external_calls:
+            return
+        if not schema.include_external_symbols:
+            return
+
+    if status == "resolved" or schema.include_external_symbols:
+        graph.ensure_external(target)
+
+    if target not in graph.nodes:
+        return
+
     graph.add_edge(
         Edge(
             source,
