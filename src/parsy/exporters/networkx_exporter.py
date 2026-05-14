@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import pickle
 from pathlib import Path
 
@@ -14,9 +15,22 @@ def to_networkx(graph: PropertyGraph):
     g = nx.MultiDiGraph()
     for node in graph.nodes.values():
         g.add_node(node.id, kind=node.kind, label=node.label, **node.properties)
-    for edge in graph.edges:
-        g.add_edge(edge.source, edge.target, kind=edge.kind, **edge.properties)
+    for index, edge in enumerate(graph.edges):
+        edge_id = _edge_id(index, edge.source, edge.target, edge.kind)
+        g.add_edge(
+            edge.source,
+            edge.target,
+            key=edge_id,
+            id=edge_id,
+            kind=edge.kind,
+            **edge.properties,
+        )
     return g
+
+
+def _edge_id(index: int, source: str, target: str, kind: str) -> str:
+    digest = hashlib.sha1(f"{index}|{source}|{target}|{kind}".encode("utf-8")).hexdigest()[:12]
+    return f"e_{index}_{digest}"
 
 
 def export_networkx(graph: PropertyGraph, output_path: Path) -> Path:
@@ -25,4 +39,3 @@ def export_networkx(graph: PropertyGraph, output_path: Path) -> Path:
     with output_path.open("wb") as fh:
         pickle.dump(g, fh)
     return output_path
-
