@@ -26,6 +26,11 @@ def main() -> None:
     help="Export format. Can be provided multiple times. Defaults to JSON.",
 )
 @click.option(
+    "--overwrite",
+    is_flag=True,
+    help="Allow writing into a non-empty output directory.",
+)
+@click.option(
     "--granularity",
     type=click.Choice(["low", "medium", "high"]),
     default=None,
@@ -47,6 +52,7 @@ def analyze_cmd(
     config_path: Path | None,
     language: str | None,
     formats: tuple[str, ...],
+    overwrite: bool,
     granularity: str | None,
     view: str | None,
     verbose: bool,
@@ -59,6 +65,7 @@ def analyze_cmd(
         config_path=config_path,
         language=language,
         formats=formats,
+        overwrite=overwrite,
         overview=overview,
         overview_endpoint=overview_endpoint,
         overview_png=overview_png,
@@ -66,11 +73,13 @@ def analyze_cmd(
         view=view,
         verbose=verbose,
     )
-    result = analyze(source, out_dir=out_dir, config=cfg)
+    result = _run_or_click_error(lambda: analyze(source, out_dir=out_dir, config=cfg))
     click.echo(f"Repository: {result.repo_path}")
     click.echo(f"Files analyzed: {result.files_analyzed}")
-    click.echo(f"Nodes: {result.node_count}")
-    click.echo(f"Edges: {result.edge_count}")
+    click.echo(f"Exported nodes: {result.node_count}")
+    click.echo(f"Exported edges: {result.edge_count}")
+    click.echo(f"Internal nodes: {result.internal_node_count}")
+    click.echo(f"Internal edges: {result.internal_edge_count}")
     click.echo("Artifacts:")
     for artifact in result.artifacts:
         click.echo(f"  - {artifact}")
@@ -87,6 +96,11 @@ def analyze_cmd(
     multiple=True,
     type=click.Choice(["json", "networkx", "graphml", "neo4j", "plantuml"]),
     help="Export format. Can be provided multiple times. Defaults to JSON.",
+)
+@click.option(
+    "--overwrite",
+    is_flag=True,
+    help="Allow writing into non-empty output directories.",
 )
 @click.option(
     "--granularity",
@@ -110,6 +124,7 @@ def analyze_many_cmd(
     config_path: Path | None,
     language: str | None,
     formats: tuple[str, ...],
+    overwrite: bool,
     granularity: str | None,
     view: str | None,
     verbose: bool,
@@ -122,6 +137,7 @@ def analyze_many_cmd(
         config_path=config_path,
         language=language,
         formats=formats,
+        overwrite=overwrite,
         overview=overview,
         overview_endpoint=overview_endpoint,
         overview_png=overview_png,
@@ -129,7 +145,7 @@ def analyze_many_cmd(
         view=view,
         verbose=verbose,
     )
-    _print_batch_result(analyze_many(sources, out_dir=out_dir, config=cfg))
+    _print_batch_result(_run_or_click_error(lambda: analyze_many(sources, out_dir=out_dir, config=cfg)))
 
 
 @main.command("analyze-list")
@@ -143,6 +159,11 @@ def analyze_many_cmd(
     multiple=True,
     type=click.Choice(["json", "networkx", "graphml", "neo4j", "plantuml"]),
     help="Export format. Can be provided multiple times. Defaults to JSON.",
+)
+@click.option(
+    "--overwrite",
+    is_flag=True,
+    help="Allow writing into non-empty output directories.",
 )
 @click.option(
     "--granularity",
@@ -166,6 +187,7 @@ def analyze_list_cmd(
     config_path: Path | None,
     language: str | None,
     formats: tuple[str, ...],
+    overwrite: bool,
     granularity: str | None,
     view: str | None,
     verbose: bool,
@@ -179,6 +201,7 @@ def analyze_list_cmd(
         config_path=config_path,
         language=language,
         formats=formats,
+        overwrite=overwrite,
         overview=overview,
         overview_endpoint=overview_endpoint,
         overview_png=overview_png,
@@ -186,7 +209,7 @@ def analyze_list_cmd(
         view=view,
         verbose=verbose,
     )
-    _print_batch_result(analyze_many(sources, out_dir=out_dir, config=cfg))
+    _print_batch_result(_run_or_click_error(lambda: analyze_many(sources, out_dir=out_dir, config=cfg)))
 
 
 def _config_from_options(
@@ -194,6 +217,7 @@ def _config_from_options(
     config_path: Path | None,
     language: str | None,
     formats: tuple[str, ...],
+    overwrite: bool,
     overview: bool | None,
     overview_endpoint: str | None,
     overview_png: bool | None,
@@ -204,6 +228,7 @@ def _config_from_options(
     return ParsyConfig.from_file(config_path).with_cli_overrides(
         language=language,
         formats=formats or None,
+        overwrite=overwrite,
         overview=overview,
         overview_endpoint=overview_endpoint,
         overview_png=overview_png,
@@ -224,11 +249,20 @@ def _print_batch_result(batch: BatchAnalysisResult) -> None:
         click.echo(f"Output: {item.out_dir}")
         click.echo(f"Repository: {item.result.repo_path}")
         click.echo(f"Files analyzed: {item.result.files_analyzed}")
-        click.echo(f"Nodes: {item.result.node_count}")
-        click.echo(f"Edges: {item.result.edge_count}")
+        click.echo(f"Exported nodes: {item.result.node_count}")
+        click.echo(f"Exported edges: {item.result.edge_count}")
+        click.echo(f"Internal nodes: {item.result.internal_node_count}")
+        click.echo(f"Internal edges: {item.result.internal_edge_count}")
         click.echo("Artifacts:")
         for artifact in item.result.artifacts:
             click.echo(f"  - {artifact}")
+
+
+def _run_or_click_error(fn):
+    try:
+        return fn()
+    except FileExistsError as exc:
+        raise click.ClickException(str(exc)) from exc
 
 
 if __name__ == "__main__":
