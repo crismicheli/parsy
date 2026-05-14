@@ -25,10 +25,34 @@ class WalkConfig:
 @dataclass(slots=True)
 class SchemaConfig:
     name: str = "python-default"
+    granularity: str = "medium"
     include_external_symbols: bool = True
     include_calls: bool = True
-    include_decorators: bool = True
-    include_annotations: bool = True
+    include_decorators: bool = False
+    include_annotations: bool = False
+    include_unresolved_external_calls: bool = False
+
+    def apply_granularity(self) -> None:
+        if self.granularity == "low":
+            self.include_external_symbols = False
+            self.include_calls = False
+            self.include_decorators = False
+            self.include_annotations = False
+            self.include_unresolved_external_calls = False
+        elif self.granularity == "medium":
+            self.include_external_symbols = True
+            self.include_calls = True
+            self.include_decorators = False
+            self.include_annotations = False
+            self.include_unresolved_external_calls = False
+        elif self.granularity == "high":
+            self.include_external_symbols = True
+            self.include_calls = True
+            self.include_decorators = True
+            self.include_annotations = True
+            self.include_unresolved_external_calls = True
+        else:
+            raise ValueError(f"Unknown granularity: {self.granularity}")
 
 
 @dataclass(slots=True)
@@ -51,11 +75,14 @@ class ParsyConfig:
     schema: SchemaConfig = field(default_factory=SchemaConfig)
     exports: ExportConfig = field(default_factory=ExportConfig)
     overview: OverviewConfig = field(default_factory=OverviewConfig)
+    verbose: bool = False
 
     @classmethod
     def from_file(cls, path: str | Path | None) -> "ParsyConfig":
         if path is None:
-            return cls()
+            cfg = cls()
+            cfg.schema.apply_granularity()
+            return cfg
         with Path(path).open("r", encoding="utf-8") as fh:
             raw = yaml.safe_load(fh) or {}
         return cls.from_mapping(raw)
@@ -64,6 +91,7 @@ class ParsyConfig:
     def from_mapping(cls, raw: dict[str, Any]) -> "ParsyConfig":
         walk = WalkConfig(**raw.get("walk", {}))
         schema = SchemaConfig(**raw.get("schema", {}))
+        schema.apply_granularity()
         exports = ExportConfig(**raw.get("exports", {}))
         overview = OverviewConfig(**raw.get("overview", {}))
         work_dir = Path(raw.get("work_dir", ".parsy-work"))
@@ -74,6 +102,7 @@ class ParsyConfig:
             schema=schema,
             exports=exports,
             overview=overview,
+            verbose=raw.get("verbose", False),
         )
 
     def with_cli_overrides(
@@ -84,6 +113,8 @@ class ParsyConfig:
         overview: bool | None = None,
         overview_endpoint: str | None = None,
         overview_png: bool | None = None,
+        granularity: str | None = None,
+        verbose: bool | None = None,
     ) -> "ParsyConfig":
         if language:
             self.language = language
@@ -95,5 +126,9 @@ class ParsyConfig:
             self.overview.endpoint = overview_endpoint
         if overview_png is not None:
             self.overview.render_png = overview_png
+        if granularity:
+            self.schema.granularity = granularity
+        if verbose is not None:
+            self.verbose = verbose
+        self.schema.apply_granularity()
         return self
-
