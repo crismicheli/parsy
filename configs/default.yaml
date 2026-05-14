@@ -2,6 +2,7 @@ language: python
 work_dir: .parsy-work
 schema:
   name: python-default
+  granularity: low
 walk:
   include:
     - "**/*.py"
