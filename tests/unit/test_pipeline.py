@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from parsy.config import ParsyConfig
 from parsy.config.models import ExportConfig
 from parsy.pipeline import analyze, analyze_many, read_sources_file
@@ -52,6 +54,43 @@ def test_function_view_exports_call_dependencies_only(tmp_path: Path) -> None:
     assert node_kinds <= {"Function", "Method", "ExternalSymbol"}
     assert edge_kinds <= {"CALLS"}
     assert "CALLS" in edge_kinds
+
+
+def test_projection_views_change_saved_graph(tmp_path: Path) -> None:
+    fixture = Path(__file__).parents[1] / "fixtures" / "python_sample"
+
+    class_cfg = ParsyConfig()
+    class_cfg.schema.view = "class"
+    class_cfg.schema.apply_granularity()
+    analyze(str(fixture), out_dir=tmp_path / "class", config=class_cfg)
+
+    module_cfg = ParsyConfig()
+    module_cfg.schema.view = "module"
+    module_cfg.schema.apply_granularity()
+    analyze(str(fixture), out_dir=tmp_path / "module", config=module_cfg)
+
+    class_graph = json.loads((tmp_path / "class" / "graph.json").read_text(encoding="utf-8"))
+    module_graph = json.loads((tmp_path / "module" / "graph.json").read_text(encoding="utf-8"))
+
+    assert {node["kind"] for node in class_graph["nodes"]} == {"Class", "Module"}
+    assert {node["kind"] for node in module_graph["nodes"]} == {"Module"}
+    assert len(class_graph["nodes"]) > len(module_graph["nodes"])
+
+
+def test_existing_output_directory_requires_overwrite(tmp_path: Path) -> None:
+    fixture = Path(__file__).parents[1] / "fixtures" / "python_sample"
+    out = tmp_path / "out"
+    out.mkdir()
+    (out / "existing.txt").write_text("do not overwrite", encoding="utf-8")
+
+    with pytest.raises(FileExistsError):
+        analyze(str(fixture), out_dir=out, config=ParsyConfig())
+
+    cfg = ParsyConfig()
+    cfg.exports.overwrite = True
+    analyze(str(fixture), out_dir=out, config=cfg)
+    assert (out / "graph.json").exists()
+    assert (out / "existing.txt").read_text(encoding="utf-8") == "do not overwrite"
 
 
 def test_pipeline_exports_plantuml(tmp_path: Path) -> None:
