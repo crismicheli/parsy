@@ -7,6 +7,8 @@ import pytest
 
 from parsy.config import ParsyConfig
 from parsy.config.models import ExportConfig
+from parsy.exporters.graphml_exporter import export_graphml
+from parsy.graph.models import Edge, Node, PropertyGraph
 from parsy.pipeline import analyze, analyze_many, read_sources_file
 
 
@@ -104,6 +106,23 @@ def test_pipeline_exports_plantuml(tmp_path: Path) -> None:
     assert "@startuml" in text
     assert "Animal" in text
     assert "<|--" in text
+
+
+def test_graphml_export_uses_unique_edge_ids(tmp_path: Path) -> None:
+    graph = PropertyGraph()
+    graph.add_node(Node(id="a", kind="Module", label="a"))
+    graph.add_node(Node(id="b", kind="Function", label="b"))
+    graph.add_node(Node(id="c", kind="Function", label="c"))
+    graph.add_edge(Edge(source="a", target="b", kind="IMPORTS"))
+    graph.add_edge(Edge(source="a", target="c", kind="IMPORTS"))
+    graph.add_edge(Edge(source="a", target="b", kind="CALLS"))
+
+    path = export_graphml(graph, tmp_path / "graph.graphml")
+    text = path.read_text(encoding="utf-8")
+
+    assert 'id="e_0_' in text
+    assert 'id="e_1_' in text
+    assert 'id="e_2_' in text
 
 
 def test_analyze_many_writes_one_directory_per_source(tmp_path: Path) -> None:
