@@ -154,6 +154,8 @@ parsy analyze https://github.com/org/repo \
   --format json
 ```
 
+Use low + dependency (default) for architecture, low + module for imports, low + class for class structure, medium + function for call graphs, and high + full only for exhaustive debugging.
+
 ## Batch analysis
 
 Analyze several repositories from CLI arguments:
