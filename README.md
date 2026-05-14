@@ -33,7 +33,7 @@ Check that the CLI is available:
 parsy --help
 ```
 
-## Optional Mermaid PNG support
+## Optional Mermaid PNG support (on Windows it requires Node.js - Download the LTS (Long-Term Support) first)
 
 `parsy` can save Mermaid source files without extra dependencies. However, PNG rendering requires the external Mermaid CLI command `mmdc`.
 
