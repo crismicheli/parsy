@@ -52,6 +52,7 @@ def analyze(source: str, *, out_dir: Path, config: ParsyConfig | None = None) ->
     cfg.schema.apply_granularity()
     out_dir = ensure_dir(out_dir)
 
+    _log(cfg, "Parsing in progress. Parsy is preparing the repository analysis pipeline.")
     _log(cfg, f"Preparing repository: {source}")
     repo_path = prepare_repository(source, cfg.work_dir)
 
@@ -139,5 +140,4 @@ def _unique_slug(source: str, used: set[str]) -> str:
 
 
 def _log(config: ParsyConfig, message: str) -> None:
-    if config.verbose:
-        print(f"[parsy] {message}")
+    print(f"[parsy] {message}")
