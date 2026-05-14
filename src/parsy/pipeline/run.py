@@ -5,7 +5,7 @@ from pathlib import Path
 
 from parsy.config import ParsyConfig
 from parsy.exporters import export_graph
-from parsy.graph import build_graph
+from parsy.graph import build_graph, project_graph
 from parsy.ingest import prepare_repository
 from parsy.overview import save_overview
 from parsy.parse import parser_for_language
@@ -69,12 +69,20 @@ def analyze(source: str, *, out_dir: Path, config: ParsyConfig | None = None) ->
     _log(cfg, "Building symbol table")
     symbols = build_symbol_table(parsed_files)
 
-    _log(cfg, f"Building graph with granularity={cfg.schema.granularity}")
+    _log(cfg, f"Building internal graph with granularity={cfg.schema.granularity}")
     graph = build_graph(repo_path, parsed_files, symbols, cfg.schema)
-    _log(cfg, f"Graph built: {len(graph.nodes)} nodes, {len(graph.edges)} edges")
+    _log(cfg, f"Internal graph built: {len(graph.nodes)} nodes, {len(graph.edges)} edges")
+
+    _log(cfg, f"Projecting exported graph with view={cfg.schema.view}")
+    export_graph_view = project_graph(graph, cfg.schema.view)
+    _log(
+        cfg,
+        f"Projected graph ready: {len(export_graph_view.nodes)} nodes, "
+        f"{len(export_graph_view.edges)} edges",
+    )
 
     _log(cfg, f"Exporting graph formats: {', '.join(cfg.exports.formats or ['json'])}")
-    artifacts = export_graph(graph, cfg.exports.formats, out_dir)
+    artifacts = export_graph(export_graph_view, cfg.exports.formats, out_dir)
 
     if cfg.overview.enabled:
         _log(cfg, "Generating optional high-level Mermaid overview")
