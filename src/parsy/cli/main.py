@@ -29,7 +29,13 @@ def main() -> None:
     "--granularity",
     type=click.Choice(["low", "medium", "high"]),
     default=None,
-    help="Graph detail level. Defaults to medium.",
+    help="Internal analysis detail. Defaults to low.",
+)
+@click.option(
+    "--view",
+    type=click.Choice(["full", "dependency", "module", "class", "function"]),
+    default=None,
+    help="External exported graph projection. Defaults to dependency.",
 )
 @click.option("--verbose", "-v", is_flag=True, help="Print high-level pipeline progress.")
 @click.option("--overview/--no-overview", default=None, help="Generate high-level Mermaid overview.")
@@ -42,6 +48,7 @@ def analyze_cmd(
     language: str | None,
     formats: tuple[str, ...],
     granularity: str | None,
+    view: str | None,
     verbose: bool,
     overview: bool | None,
     overview_endpoint: str | None,
@@ -56,6 +63,7 @@ def analyze_cmd(
         overview_endpoint=overview_endpoint,
         overview_png=overview_png,
         granularity=granularity,
+        view=view,
         verbose=verbose,
     )
     result = analyze(source, out_dir=out_dir, config=cfg)
@@ -84,7 +92,13 @@ def analyze_cmd(
     "--granularity",
     type=click.Choice(["low", "medium", "high"]),
     default=None,
-    help="Graph detail level. Defaults to medium.",
+    help="Internal analysis detail. Defaults to low.",
+)
+@click.option(
+    "--view",
+    type=click.Choice(["full", "dependency", "module", "class", "function"]),
+    default=None,
+    help="External exported graph projection. Defaults to dependency.",
 )
 @click.option("--verbose", "-v", is_flag=True, help="Print high-level pipeline progress.")
 @click.option("--overview/--no-overview", default=None, help="Generate high-level Mermaid overview.")
@@ -97,6 +111,7 @@ def analyze_many_cmd(
     language: str | None,
     formats: tuple[str, ...],
     granularity: str | None,
+    view: str | None,
     verbose: bool,
     overview: bool | None,
     overview_endpoint: str | None,
@@ -111,6 +126,7 @@ def analyze_many_cmd(
         overview_endpoint=overview_endpoint,
         overview_png=overview_png,
         granularity=granularity,
+        view=view,
         verbose=verbose,
     )
     _print_batch_result(analyze_many(sources, out_dir=out_dir, config=cfg))
@@ -132,7 +148,13 @@ def analyze_many_cmd(
     "--granularity",
     type=click.Choice(["low", "medium", "high"]),
     default=None,
-    help="Graph detail level. Defaults to medium.",
+    help="Internal analysis detail. Defaults to low.",
+)
+@click.option(
+    "--view",
+    type=click.Choice(["full", "dependency", "module", "class", "function"]),
+    default=None,
+    help="External exported graph projection. Defaults to dependency.",
 )
 @click.option("--verbose", "-v", is_flag=True, help="Print high-level pipeline progress.")
 @click.option("--overview/--no-overview", default=None, help="Generate high-level Mermaid overview.")
@@ -145,6 +167,7 @@ def analyze_list_cmd(
     language: str | None,
     formats: tuple[str, ...],
     granularity: str | None,
+    view: str | None,
     verbose: bool,
     overview: bool | None,
     overview_endpoint: str | None,
@@ -160,6 +183,7 @@ def analyze_list_cmd(
         overview_endpoint=overview_endpoint,
         overview_png=overview_png,
         granularity=granularity,
+        view=view,
         verbose=verbose,
     )
     _print_batch_result(analyze_many(sources, out_dir=out_dir, config=cfg))
@@ -174,6 +198,7 @@ def _config_from_options(
     overview_endpoint: str | None,
     overview_png: bool | None,
     granularity: str | None,
+    view: str | None,
     verbose: bool | None,
 ) -> ParsyConfig:
     return ParsyConfig.from_file(config_path).with_cli_overrides(
@@ -183,6 +208,7 @@ def _config_from_options(
         overview_endpoint=overview_endpoint,
         overview_png=overview_png,
         granularity=granularity,
+        view=view,
         verbose=verbose,
     )
 
