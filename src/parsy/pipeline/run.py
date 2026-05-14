@@ -81,7 +81,10 @@ def analyze(source: str, *, out_dir: Path, config: ParsyConfig | None = None) ->
         artifacts.extend(
             save_overview(
                 source=source,
+                repo_root=repo_path,
                 files=files,
+                graph=graph,
+                parsed_files=parsed_files,
                 out_dir=out_dir / "overview",
                 endpoint=cfg.overview.endpoint,
                 render_png=cfg.overview.render_png,
