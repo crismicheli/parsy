@@ -1,0 +1,21 @@
+language: python
+work_dir: .parsy-work
+schema:
+  name: python-default
+walk:
+  include:
+    - "**/*.py"
+  exclude:
+    - "**/.git/**"
+    - "**/.venv/**"
+    - "**/venv/**"
+    - "**/__pycache__/**"
+    - "**/build/**"
+    - "**/dist/**"
+exports:
+  formats:
+    - json
+    # Other supported formats: networkx, graphml, neo4j, plantuml
+overview:
+  enabled: false
+  endpoint: null

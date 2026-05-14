@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "parsy"
+version = "0.1.0"
+description = "Python-first repository symbol graph generator"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Cris Micheli"}]
+dependencies = [
+  "click>=8.1",
+  "pyyaml>=6.0",
+  "requests>=2.31",
+]
+
+[project.optional-dependencies]
+networkx = ["networkx>=3.2"]
+dev = ["pytest>=8.0", "ruff>=0.5"]
+
+[project.scripts]
+parsy = "parsy.cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
