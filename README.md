@@ -4,6 +4,8 @@
 
 The default export is JSON. Optional exporters include NetworkX, GraphML, Neo4j CSV, and PlantUML. A separate optional overview layer can save a high-level Mermaid diagram and render it to PNG if Mermaid CLI is installed.
 
+Anyway, try first this https://gitdiagram.com/ for a free overview diagram, based on LLM analysis (OpenAI).
+
 ## Install
 
 Create and activate a virtual environment:
