@@ -21,6 +21,36 @@ def test_pipeline_exports_json(tmp_path: Path) -> None:
     assert "pkg.models.Animal" in node_ids
     assert "pkg.models.Dog" in node_ids
     assert "INHERITS" in edge_kinds
+    assert "CALLS" not in edge_kinds
+
+
+def test_pipeline_medium_granularity_includes_calls(tmp_path: Path) -> None:
+    fixture = Path(__file__).parents[1] / "fixtures" / "python_sample"
+    out = tmp_path / "out"
+    cfg = ParsyConfig()
+    cfg.schema.granularity = "medium"
+    cfg.schema.apply_granularity()
+    analyze(str(fixture), out_dir=out, config=cfg)
+    graph_path = out / "graph.json"
+    data = json.loads(graph_path.read_text(encoding="utf-8"))
+    edge_kinds = {edge["kind"] for edge in data["edges"]}
+    assert "CALLS" in edge_kinds
+
+
+def test_function_view_exports_call_dependencies_only(tmp_path: Path) -> None:
+    fixture = Path(__file__).parents[1] / "fixtures" / "python_sample"
+    out = tmp_path / "out"
+    cfg = ParsyConfig()
+    cfg.schema.granularity = "medium"
+    cfg.schema.view = "function"
+    cfg.schema.apply_granularity()
+    analyze(str(fixture), out_dir=out, config=cfg)
+    graph_path = out / "graph.json"
+    data = json.loads(graph_path.read_text(encoding="utf-8"))
+    node_kinds = {node["kind"] for node in data["nodes"]}
+    edge_kinds = {edge["kind"] for edge in data["edges"]}
+    assert node_kinds <= {"Function", "Method", "ExternalSymbol"}
+    assert edge_kinds <= {"CALLS"}
     assert "CALLS" in edge_kinds
 
 
