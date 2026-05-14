@@ -20,6 +20,8 @@ class AnalysisResult:
     files_analyzed: int
     node_count: int
     edge_count: int
+    internal_node_count: int
+    internal_edge_count: int
     artifacts: list[Path]
 
 
@@ -50,7 +52,7 @@ class BatchAnalysisResult:
 def analyze(source: str, *, out_dir: Path, config: ParsyConfig | None = None) -> AnalysisResult:
     cfg = config or ParsyConfig()
     cfg.schema.apply_granularity()
-    out_dir = ensure_dir(out_dir)
+    out_dir = _prepare_output_dir(out_dir, overwrite=cfg.exports.overwrite)
 
     _log(cfg, "Parsing in progress. Parsy is preparing the repository analysis pipeline.")
     _log(cfg, f"Preparing repository: {source}")
@@ -103,8 +105,10 @@ def analyze(source: str, *, out_dir: Path, config: ParsyConfig | None = None) ->
     return AnalysisResult(
         repo_path=repo_path,
         files_analyzed=len(files),
-        node_count=len(graph.nodes),
-        edge_count=len(graph.edges),
+        node_count=len(export_graph_view.nodes),
+        edge_count=len(export_graph_view.edges),
+        internal_node_count=len(graph.nodes),
+        internal_edge_count=len(graph.edges),
         artifacts=artifacts,
     )
 
@@ -152,3 +156,12 @@ def _unique_slug(source: str, used: set[str]) -> str:
 
 def _log(config: ParsyConfig, message: str) -> None:
     print(f"[parsy] {message}")
+
+
+def _prepare_output_dir(out_dir: Path, *, overwrite: bool) -> Path:
+    if out_dir.exists() and any(out_dir.iterdir()) and not overwrite:
+        raise FileExistsError(
+            f"Output directory is not empty: {out_dir}. "
+            "Choose a new --out directory or rerun with --overwrite."
+        )
+    return ensure_dir(out_dir)
