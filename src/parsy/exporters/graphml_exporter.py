@@ -14,10 +14,10 @@ def export_graphml(graph: PropertyGraph, output_path: Path) -> Path:
     g = to_networkx(graph)
     for _, attrs in g.nodes(data=True):
         _flatten(attrs)
-    for _, _, attrs in g.edges(data=True):
+    for _, _, _, attrs in g.edges(keys=True, data=True):
         _flatten(attrs)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    nx.write_graphml(g, output_path)
+    nx.write_graphml(g, output_path, edge_id_from_attribute="id")
     return output_path
 
 
@@ -27,4 +27,3 @@ def _flatten(attrs: dict) -> None:
             attrs[key] = ""
         elif isinstance(value, (dict, list, tuple, set)):
             attrs[key] = str(value)
-
